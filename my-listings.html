@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My listings — Tibi Resale</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">Tibi Resale</a>
+    <nav>
+      <a href="index.html">Feed</a>
+      <a href="new-listing.html">New listing</a>
+      <a href="#" id="logout-btn">Log out</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>My listings</h1>
+    <div class="empty-state" id="empty-state" style="display: none">
+      You haven't posted anything yet. <a href="new-listing.html">Post a listing.</a>
+    </div>
+    <div id="my-listings"></div>
+  </main>
+
+  <script type="module" src="js/my-listings.js"></script>
+</body>
+</html>

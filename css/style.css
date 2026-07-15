@@ -1,0 +1,281 @@
+:root {
+  --ink: #1a1a1a;
+  --muted: #6b6b6b;
+  --border: #e2e2e2;
+  --bg: #fafafa;
+  --accent: #1a1a1a;
+  --danger: #b3261e;
+  --radius: 6px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  color: var(--ink);
+  background: var(--bg);
+}
+
+header.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: #fff;
+}
+
+header.site-header nav a {
+  margin-left: 16px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 14px;
+}
+
+header.site-header nav a:hover {
+  text-decoration: underline;
+}
+
+header.site-header .brand {
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+}
+
+.auth-form {
+  max-width: 360px;
+  margin: 64px auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+h1 {
+  font-size: 22px;
+  margin-bottom: 24px;
+}
+
+label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+button {
+  padding: 10px 16px;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.85;
+}
+
+button.secondary {
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid var(--border);
+}
+
+button.danger {
+  background: var(--danger);
+}
+
+.error {
+  color: var(--danger);
+  font-size: 13px;
+  min-height: 18px;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.listing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.listing-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+.listing-card img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  background: #eee;
+}
+
+.listing-card .listing-body {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.listing-card .item-name {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.listing-card .meta {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.listing-card .seller {
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.status-badge {
+  display: inline-block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #eee;
+  color: var(--muted);
+  width: fit-content;
+}
+
+.status-badge.active {
+  background: #e6f4ea;
+  color: #1e7a34;
+}
+
+.status-badge.sold {
+  background: #fdecea;
+  color: #a33;
+}
+
+.status-badge.archived {
+  background: #f0f0f0;
+  color: #777;
+}
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.search-result {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  background: #fff;
+}
+
+.search-result:hover {
+  border-color: var(--ink);
+}
+
+.search-result img {
+  width: 48px;
+  height: 64px;
+  object-fit: cover;
+  background: #eee;
+  border-radius: 4px;
+}
+
+.search-result .name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.search-result .type {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.selected-product {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  margin-top: 16px;
+}
+
+.selected-product img {
+  width: 80px;
+  height: 106px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #eee;
+}
+
+.my-listing-row {
+  display: flex;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: #fff;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.my-listing-row img {
+  width: 56px;
+  height: 74px;
+  object-fit: cover;
+  border-radius: 4px;
+  background: #eee;
+}
+
+.my-listing-row .info {
+  flex: 1;
+}
+
+.my-listing-row .actions {
+  display: flex;
+  gap: 8px;
+}
+
+.empty-state {
+  color: var(--muted);
+  font-size: 14px;
+  padding: 40px 0;
+  text-align: center;
+}

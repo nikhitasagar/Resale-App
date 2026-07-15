@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Log in — Tibi Resale</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="login.html">Tibi Resale</a>
+  </header>
+
+  <main>
+    <form id="login-form" class="auth-form">
+      <h1>Log in</h1>
+
+      <label for="email">Email</label>
+      <input type="email" id="email" required autocomplete="email" />
+
+      <label for="password">Password</label>
+      <input type="password" id="password" autocomplete="current-password" />
+
+      <div class="error" id="error"></div>
+
+      <button type="submit">Log in</button>
+      <button type="button" class="secondary" id="magic-link-btn">
+        Email me a magic link instead
+      </button>
+
+      <p class="hint">
+        No account? <a href="signup.html">Sign up</a>
+      </p>
+    </form>
+  </main>
+
+  <script type="module">
+    import { supabase } from "./js/supabase-client.js";
+    import { signInWithPassword, signInWithMagicLink, createProfile } from "./js/auth.js";
+
+    // If this user signed up but email confirmation delayed profile creation, finish it now
+    // using the fields signup.html stashed locally. Otherwise send anyone without a profile
+    // back to signup.html to collect name + Instagram handle.
+    async function routeAfterLogin() {
+      const { data: { session } } = await supabase.auth.getSession();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (profile) {
+        window.location.href = "index.html";
+        return;
+      }
+
+      const pending = localStorage.getItem("pending_profile");
+      if (pending) {
+        const { name, instagram_handle } = JSON.parse(pending);
+        const { error } = await createProfile(session.user.id, name, instagram_handle);
+        localStorage.removeItem("pending_profile");
+        if (!error) {
+          window.location.href = "index.html";
+          return;
+        }
+      }
+
+      window.location.href = "signup.html";
+    }
+
+    // Already logged in — route to the feed (or signup, if the profile is incomplete).
+    const { data: { session: existingSession } } = await supabase.auth.getSession();
+    if (existingSession) {
+      await routeAfterLogin();
+    }
+
+    const form = document.getElementById("login-form");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const errorEl = document.getElementById("error");
+    const magicLinkBtn = document.getElementById("magic-link-btn");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      errorEl.textContent = "";
+
+      if (!passwordInput.value) {
+        errorEl.textContent = "Enter your password, or use the magic link option.";
+        return;
+      }
+
+      const { error } = await signInWithPassword(emailInput.value, passwordInput.value);
+      if (error) {
+        errorEl.textContent = error.message;
+        return;
+      }
+      await routeAfterLogin();
+    });
+
+    magicLinkBtn.addEventListener("click", async () => {
+      errorEl.textContent = "";
+      if (!emailInput.value) {
+        errorEl.textContent = "Enter your email first.";
+        return;
+      }
+      const { error } = await signInWithMagicLink(emailInput.value);
+      if (error) {
+        errorEl.textContent = error.message;
+        return;
+      }
+      errorEl.style.color = "#1e7a34";
+      errorEl.textContent = "Check your email for a login link.";
+    });
+  </script>
+</body>
+</html>

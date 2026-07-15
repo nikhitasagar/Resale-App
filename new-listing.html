@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New listing — Tibi Resale</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="index.html">Tibi Resale</a>
+    <nav>
+      <a href="index.html">Feed</a>
+      <a href="my-listings.html">My listings</a>
+      <a href="#" id="logout-btn">Log out</a>
+    </nav>
+  </header>
+
+  <main>
+    <h1>New listing</h1>
+
+    <label for="search-input">Search Tibi's catalog</label>
+    <input type="search" id="search-input" placeholder="e.g. silk blazer" autocomplete="off" />
+    <div class="search-results" id="search-results"></div>
+
+    <div class="selected-product" id="selected-product" style="display: none"></div>
+
+    <form id="size-form" class="auth-form" style="display: none; margin-top: 16px">
+      <label for="size-input">Size</label>
+      <input type="text" id="size-input" required placeholder="e.g. 4, M, 27" />
+      <button type="submit">Post listing</button>
+    </form>
+
+    <div class="error" id="error"></div>
+  </main>
+
+  <script type="module" src="js/new-listing.js"></script>
+</body>
+</html>

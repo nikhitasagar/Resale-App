@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign up — Tibi Resale</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="login.html">Tibi Resale</a>
+  </header>
+
+  <main>
+    <form id="account-form" class="auth-form">
+      <h1>Create your account</h1>
+
+      <label for="email">Email</label>
+      <input type="email" id="email" required autocomplete="email" />
+
+      <label for="password">Password</label>
+      <input type="password" id="password" required autocomplete="new-password" minlength="6" />
+
+      <div class="error" id="account-error"></div>
+
+      <button type="submit">Continue</button>
+
+      <p class="hint">
+        Already have an account? <a href="login.html">Log in</a>
+      </p>
+    </form>
+
+    <form id="profile-form" class="auth-form" style="display: none">
+      <h1>Tell people how to reach you</h1>
+      <p class="hint">Every listing shows your name and Instagram handle so buyers know how to contact you.</p>
+
+      <label for="name">Display name</label>
+      <input type="text" id="name" required autocomplete="name" />
+
+      <label for="instagram">Instagram handle</label>
+      <input type="text" id="instagram" required placeholder="e.g. yourhandle" />
+
+      <div class="error" id="profile-error"></div>
+
+      <button type="submit">Finish sign up</button>
+    </form>
+
+    <div id="confirm-email-notice" class="hint" style="display: none; margin-top: 24px">
+      We sent a confirmation link to your email. Click it, then
+      <a href="login.html">log in</a> — you'll finish your profile right after.
+    </div>
+  </main>
+
+  <script type="module">
+    import { supabase } from "./js/supabase-client.js";
+    import { signUp, createProfile } from "./js/auth.js";
+
+    const accountForm = document.getElementById("account-form");
+    const profileForm = document.getElementById("profile-form");
+    const confirmNotice = document.getElementById("confirm-email-notice");
+    const accountError = document.getElementById("account-error");
+    const profileError = document.getElementById("profile-error");
+
+    let pendingUserId = null;
+
+    // If the user already has a session (e.g. they confirmed their email and logged in
+    // separately) but no profile row yet, skip straight to the name/handle step.
+    const { data: { session: existingSession } } = await supabase.auth.getSession();
+    if (existingSession) {
+      const { data: existingProfile } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("id", existingSession.user.id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        window.location.href = "index.html";
+      } else {
+        accountForm.style.display = "none";
+        profileForm.style.display = "flex";
+      }
+    }
+
+    accountForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      accountError.textContent = "";
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const { data, error } = await signUp(email, password);
+      if (error) {
+        accountError.textContent = error.message;
+        return;
+      }
+
+      if (data.session) {
+        // Email confirmation is off (or already satisfied) — we have a session right away.
+        pendingUserId = data.user.id;
+        accountForm.style.display = "none";
+        profileForm.style.display = "flex";
+      } else {
+        // Email confirmation required — stash the pending profile fields and finish
+        // creating the profile after the user confirms and logs in.
+        pendingUserId = data.user?.id ?? null;
+        accountForm.style.display = "none";
+        profileForm.style.display = "flex";
+      }
+    });
+
+    profileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      profileError.textContent = "";
+
+      const name = document.getElementById("name").value;
+      const instagram = document.getElementById("instagram").value.replace(/^@/, "");
+
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session) {
+        const { error } = await createProfile(session.user.id, name, instagram);
+        if (error) {
+          profileError.textContent = error.message;
+          return;
+        }
+        window.location.href = "index.html";
+        return;
+      }
+
+      // No session yet (email confirmation pending) — save these fields so login.html
+      // can finish creating the profile once the user confirms and signs in.
+      localStorage.setItem(
+        "pending_profile",
+        JSON.stringify({ name, instagram_handle: instagram })
+      );
+      profileForm.style.display = "none";
+      confirmNotice.style.display = "block";
+    });
+  </script>
+</body>
+</html>
