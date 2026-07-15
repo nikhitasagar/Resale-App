@@ -12,12 +12,24 @@
     <nav>
       <a href="new-listing.html">New listing</a>
       <a href="my-listings.html">My listings</a>
+      <a href="profile.html">Profile</a>
       <a href="#" id="logout-btn">Log out</a>
     </nav>
   </header>
 
   <main>
     <h1>Listings</h1>
+
+    <div class="filter-bar">
+      <input type="search" id="search-input" placeholder="Search by item name…" autocomplete="off" />
+      <select id="type-filter">
+        <option value="">All types</option>
+      </select>
+      <select id="size-filter">
+        <option value="">All sizes</option>
+      </select>
+    </div>
+
     <div class="empty-state" id="empty-state" style="display: none">
       No listings yet. <a href="new-listing.html">Post the first one.</a>
     </div>

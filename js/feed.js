@@ -3,6 +3,64 @@ import { signOut } from "./auth.js";
 
 const grid = document.getElementById("listing-grid");
 const emptyState = document.getElementById("empty-state");
+const searchInput = document.getElementById("search-input");
+const typeFilter = document.getElementById("type-filter");
+const sizeFilter = document.getElementById("size-filter");
+
+let allListings = [];
+let savedListingIds = new Set(); // listing_id -> true
+let savedRowIdByListingId = new Map(); // listing_id -> saved_listings.id
+let currentUserId = null;
+
+function populateFilterOptions(listings) {
+  const types = [...new Set(listings.map((l) => l.item_type).filter(Boolean))].sort();
+  const sizes = [...new Set(listings.map((l) => l.size).filter(Boolean))].sort();
+
+  typeFilter.innerHTML = '<option value="">All types</option>';
+  types.forEach((type) => {
+    const opt = document.createElement("option");
+    opt.value = type;
+    opt.textContent = type;
+    typeFilter.appendChild(opt);
+  });
+
+  sizeFilter.innerHTML = '<option value="">All sizes</option>';
+  sizes.forEach((size) => {
+    const opt = document.createElement("option");
+    opt.value = size;
+    opt.textContent = size;
+    sizeFilter.appendChild(opt);
+  });
+}
+
+async function toggleSave(listingId, btn) {
+  if (savedListingIds.has(listingId)) {
+    const savedRowId = savedRowIdByListingId.get(listingId);
+    const { error } = await supabase.from("saved_listings").delete().eq("id", savedRowId);
+    if (error) {
+      alert(`Couldn't unsave: ${error.message}`);
+      return;
+    }
+    savedListingIds.delete(listingId);
+    savedRowIdByListingId.delete(listingId);
+    btn.textContent = "Save";
+    btn.classList.remove("saved");
+  } else {
+    const { data, error } = await supabase
+      .from("saved_listings")
+      .insert({ user_id: currentUserId, listing_id: listingId })
+      .select("id")
+      .single();
+    if (error) {
+      alert(`Couldn't save: ${error.message}`);
+      return;
+    }
+    savedListingIds.add(listingId);
+    savedRowIdByListingId.set(listingId, data.id);
+    btn.textContent = "Saved";
+    btn.classList.add("saved");
+  }
+}
 
 function renderListing(listing) {
   const card = document.createElement("div");
@@ -40,8 +98,53 @@ function renderListing(listing) {
   seller.textContent = handle ? `${sellerName} · @${handle}` : sellerName;
   body.appendChild(seller);
 
+  const saveBtn = document.createElement("button");
+  saveBtn.className = "save-btn";
+  const isSaved = savedListingIds.has(listing.id);
+  saveBtn.textContent = isSaved ? "Saved" : "Save";
+  if (isSaved) saveBtn.classList.add("saved");
+  saveBtn.addEventListener("click", () => toggleSave(listing.id, saveBtn));
+  body.appendChild(saveBtn);
+
   card.appendChild(body);
   return card;
+}
+
+function applyFilters() {
+  const query = searchInput.value.trim().toLowerCase();
+  const type = typeFilter.value;
+  const size = sizeFilter.value;
+
+  const filtered = allListings.filter((listing) => {
+    if (query && !listing.item_name.toLowerCase().includes(query)) return false;
+    if (type && listing.item_type !== type) return false;
+    if (size && listing.size !== size) return false;
+    return true;
+  });
+
+  grid.innerHTML = "";
+  if (filtered.length === 0) {
+    emptyState.textContent = "No listings match your search/filters.";
+    emptyState.style.display = "block";
+    return;
+  }
+
+  emptyState.style.display = "none";
+  filtered.forEach((listing) => grid.appendChild(renderListing(listing)));
+}
+
+async function loadSavedListingIds(userId) {
+  const { data, error } = await supabase
+    .from("saved_listings")
+    .select("id, listing_id")
+    .eq("user_id", userId);
+
+  if (error) return;
+
+  data.forEach((row) => {
+    savedListingIds.add(row.listing_id);
+    savedRowIdByListingId.set(row.listing_id, row.id);
+  });
 }
 
 async function loadFeed() {
@@ -57,17 +160,27 @@ async function loadFeed() {
     return;
   }
 
-  if (!data || data.length === 0) {
+  allListings = data ?? [];
+
+  if (allListings.length === 0) {
+    emptyState.innerHTML = 'No listings yet. <a href="new-listing.html">Post the first one.</a>';
     emptyState.style.display = "block";
     return;
   }
 
-  emptyState.style.display = "none";
-  data.forEach((listing) => grid.appendChild(renderListing(listing)));
+  populateFilterOptions(allListings);
+  applyFilters();
 }
 
 const session = await requireSession();
 if (session) {
+  currentUserId = session.user.id;
   document.getElementById("logout-btn").addEventListener("click", signOut);
-  loadFeed();
+
+  searchInput.addEventListener("input", applyFilters);
+  typeFilter.addEventListener("change", applyFilters);
+  sizeFilter.addEventListener("change", applyFilters);
+
+  await loadSavedListingIds(currentUserId);
+  await loadFeed();
 }

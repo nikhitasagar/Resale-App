@@ -29,9 +29,13 @@ and edge function below — keep them in sync if you change one.
 7. Every listing shows the lister's name and @handle so viewers know how to contact them.
 8. Lister actions on their own listings: add, mark sold, mark archived, mark deleted (soft
    delete only — never a hard DB delete).
-9. Logged-in users can view all active/sold listings.
+9. Logged-in users can view all active/sold listings, and can search by item name and filter
+   by item type and size.
 10. Logged-out users cannot view any listing data — enforced at the database level (Row Level
     Security), not just hidden in the UI. This is a hard requirement, not a nice-to-have.
+11. Users can view and edit their own account details (display name, Instagram handle) from a
+    profile page.
+12. Users can save/unsave any listing; saved listings show up on their profile page.
 
 ## Non-goals (v1 — do not build these unless asked)
 
@@ -43,12 +47,14 @@ and edge function below — keep them in sync if you change one.
 
 ## Data model
 
-Canonical file: `supabase/schema.sql`. Two tables:
+Canonical file: `supabase/schema.sql`. Three tables:
 
 - `profiles` — one row per user, extends `auth.users`. Fields: `name`, `instagram_handle`.
 - `listings` — one row per resale item. Fields: `seller_id` (→ profiles), `shopify_product_id`,
   `item_name`, `image_url`, `item_type`, `size`, `status` (enum: `active`, `sold`, `archived`,
   `deleted`), timestamps.
+- `saved_listings` — join table for bookmarking. Fields: `user_id` (→ profiles), `listing_id`
+  (→ listings), unique on `(user_id, listing_id)`. Private to the user who saved it.
 
 `status = 'deleted'` **is** the soft delete. There is no hard-delete path anywhere in the app.
 
@@ -66,7 +72,12 @@ RLS:
 - No delete policy exists at all — reinforces that hard deletes shouldn't happen.
 - `profiles` select policy: `auth.role() = 'authenticated'` — logged-in users can see each
   other's name/handle (needed to display contact info on listings), but logged-out users can't.
+  Note this also means any authenticated user can query the whole `profiles` table directly,
+  not just profiles tied to a listing they're viewing — acceptable since Instagram handles are
+  already meant to be a public contact method.
 - `profiles` insert/update policy: `auth.uid() = id` only.
+- `saved_listings` policy (all operations): `auth.uid() = user_id` — a user can only
+  see/create/delete their own saved-listing rows; nobody can see what anyone else has saved.
 
 Do not weaken these policies for convenience during development — build the login flow first so
 you're always testing against a real authenticated session.
@@ -96,29 +107,33 @@ Plain multi-page static site (no client-side router needed):
 - `login.html` — email/password or magic link sign-in
 - `signup.html` — create account, then immediately prompt for name + Instagram handle (writes
   to `profiles`)
-- `index.html` — the feed. Protected. Query `listings` where `status in ('active','sold')`,
-  joined with `profiles` for name + @handle. Redirect to `login.html` if there's no session.
+- `index.html` — the feed, and the app's homepage once logged in. Protected. Query `listings`
+  where `status in ('active','sold')`, joined with `profiles` for name + @handle. Client-side
+  search by item name plus filters (by item type, by size) over the fetched set. Each card has
+  a Save/Unsave toggle. Redirect to `login.html` if there's no session.
 - `new-listing.html` — protected. Search box wired to the `search-tibi` edge function → pick a
   result → enter size → insert into `listings`.
 - `my-listings.html` — protected. Shows the current user's own listings (all statuses except
   `deleted`) with buttons to flip status to sold/archived/deleted.
+- `profile.html` — protected. View/edit the current user's `profiles` row (name, Instagram
+  handle), plus a "Saved listings" section listing everything in `saved_listings` for this user.
 
 Every protected page should check for a Supabase session on load and redirect to `login.html`
 if there isn't one. Remember: this check is a UX courtesy, not the security — RLS is.
 
 ## Config
 
-`config.js` at the repo root holds the Supabase project URL and **anon public key**:
+`config.js` at the repo root holds the Supabase project URL and **publishable key**:
 
 ```js
 export const SUPABASE_URL = "https://YOUR-PROJECT.supabase.co";
-export const SUPABASE_ANON_KEY = "YOUR-ANON-PUBLIC-KEY";
+export const SUPABASE_PUBLISHABLE_KEY = "YOUR-PUBLISHABLE-KEY";
 ```
 
-This file is safe to commit. The anon key is meant to be public in every Supabase client app —
-RLS is what enforces access, not secrecy of this key. Do not try to hide it in an env var that a
-static site can't read at runtime anyway. Never commit a Supabase *service role* key anywhere —
-this project doesn't need one.
+This file is safe to commit. The publishable key (Supabase's newer name for the anon key) is
+meant to be public in every Supabase client app — RLS is what enforces access, not secrecy of
+this key. Do not try to hide it in an env var that a static site can't read at runtime anyway.
+Never commit a Supabase *service role* key anywhere — this project doesn't need one.
 
 ## Repo layout to produce
 
@@ -129,6 +144,7 @@ this project doesn't need one.
 ├── signup.html
 ├── new-listing.html
 ├── my-listings.html
+├── profile.html
 ├── config.js
 ├── css/style.css
 ├── js/
@@ -136,7 +152,8 @@ this project doesn't need one.
 │   ├── auth.js
 │   ├── feed.js
 │   ├── new-listing.js
-│   └── my-listings.js
+│   ├── my-listings.js
+│   └── profile.js
 ├── supabase/
 │   ├── schema.sql
 │   └── functions/search-tibi/index.ts
@@ -154,3 +171,6 @@ this project doesn't need one.
 - [ ] Every listing card shows the lister's name + @handle
 - [ ] Sold/Archived/Deleted are all just status updates — no hard deletes anywhere
 - [ ] Site works as static files with no build step, ready for GitHub Pages
+- [ ] Users can view/edit their name + Instagram handle from `profile.html`
+- [ ] Feed supports search-by-name and filter-by-type/size
+- [ ] Saved listings persist per-user and are private to that user (RLS-enforced)

@@ -116,6 +116,42 @@ button.danger {
   color: var(--muted);
 }
 
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.filter-bar input[type="search"] {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-bar select {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: #fff;
+}
+
+.save-btn {
+  margin-top: 8px;
+  background: #fff;
+  color: var(--ink);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  padding: 6px 12px;
+  align-self: flex-start;
+}
+
+.save-btn.saved {
+  background: var(--ink);
+  color: #fff;
+  border-color: var(--ink);
+}
+
 .listing-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));

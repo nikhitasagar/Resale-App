@@ -74,3 +74,24 @@ create policy "users update own listings"
   on listings for update
   using (auth.uid() = seller_id)
   with check (auth.uid() = seller_id);
+
+-- ---------------------------------------------------------------------------
+-- Saved listings — lets a user bookmark a listing to find it again from their profile
+-- ---------------------------------------------------------------------------
+
+create table saved_listings (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) not null,
+  listing_id uuid references listings(id) not null,
+  created_at timestamptz default now(),
+  unique (user_id, listing_id)
+);
+
+alter table saved_listings enable row level security;
+
+-- A saved listing is private to the user who saved it — no policy grants any other
+-- user select/insert/delete access to someone else's saved_listings rows.
+create policy "users manage own saved listings"
+  on saved_listings for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
