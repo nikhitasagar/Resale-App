@@ -11,9 +11,12 @@ create table profiles (
 
 create type listing_status as enum ('active', 'sold', 'archived', 'deleted');
 
+-- `on delete cascade` here is deliberate: it's what makes account deletion (a user closing
+-- their own account) a real hard delete of their data, distinct from the listing-level soft
+-- delete below — those are different concerns (see "Account deletion" further down).
 create table listings (
   id uuid default gen_random_uuid() primary key,
-  seller_id uuid references profiles(id) not null,
+  seller_id uuid references profiles(id) on delete cascade not null,
   shopify_product_id text not null,   -- the storefront's product handle, kept for reference/linking back
   item_name text not null,
   image_url text not null,            -- the storefront's own CDN url — never uploaded/stored by us
@@ -81,8 +84,8 @@ create policy "users update own listings"
 
 create table saved_listings (
   id uuid default gen_random_uuid() primary key,
-  user_id uuid references profiles(id) not null,
-  listing_id uuid references listings(id) not null,
+  user_id uuid references profiles(id) on delete cascade not null,
+  listing_id uuid references listings(id) on delete cascade not null,
   created_at timestamptz default now(),
   unique (user_id, listing_id)
 );

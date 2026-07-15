@@ -1,5 +1,5 @@
-import { supabase, requireSession } from "./supabase-client.js";
-import { signOut } from "./auth.js";
+import { supabase, requireSession } from "./supabase-client.js?v=3";
+import { signOut } from "./auth.js?v=3";
 
 const profileForm = document.getElementById("profile-form");
 const nameInput = document.getElementById("name");
@@ -9,6 +9,20 @@ const profileSaved = document.getElementById("profile-saved");
 
 const savedGrid = document.getElementById("saved-grid");
 const savedEmpty = document.getElementById("saved-empty");
+
+const loginDetailsForm = document.getElementById("login-details-form");
+const accountEmailInput = document.getElementById("account-email");
+const newPasswordInput = document.getElementById("new-password");
+const confirmPasswordInput = document.getElementById("confirm-password");
+const loginDetailsError = document.getElementById("login-details-error");
+const loginDetailsSaved = document.getElementById("login-details-saved");
+
+const deleteAccountBtn = document.getElementById("delete-account-btn");
+const confirmDeleteForm = document.getElementById("confirm-delete-form");
+const deleteConfirmInput = document.getElementById("delete-confirm-input");
+const deleteAccountError = document.getElementById("delete-account-error");
+const confirmDeleteBtn = document.getElementById("confirm-delete-btn");
+const cancelDeleteBtn = document.getElementById("cancel-delete-btn");
 
 async function loadProfile(userId) {
   const { data, error } = await supabase
@@ -136,9 +150,85 @@ profileForm.addEventListener("submit", async (e) => {
   profileSaved.textContent = "Saved.";
 });
 
+loginDetailsForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  loginDetailsError.textContent = "";
+  loginDetailsSaved.textContent = "";
+
+  const newPassword = newPasswordInput.value;
+  if (newPassword && newPassword !== confirmPasswordInput.value) {
+    loginDetailsError.textContent = "Passwords don't match.";
+    return;
+  }
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const updates = {};
+  if (accountEmailInput.value && accountEmailInput.value !== session.user.email) {
+    updates.email = accountEmailInput.value;
+  }
+  if (newPassword) {
+    updates.password = newPassword;
+  }
+
+  if (Object.keys(updates).length === 0) {
+    loginDetailsSaved.textContent = "Nothing to update.";
+    return;
+  }
+
+  const { error } = await supabase.auth.updateUser(updates);
+  if (error) {
+    loginDetailsError.textContent = error.message;
+    return;
+  }
+
+  newPasswordInput.value = "";
+  confirmPasswordInput.value = "";
+  loginDetailsSaved.textContent = updates.email
+    ? "Saved. Check your new email address for a confirmation link."
+    : "Saved.";
+});
+
+deleteAccountBtn.addEventListener("click", () => {
+  deleteAccountBtn.style.display = "none";
+  confirmDeleteForm.style.display = "flex";
+});
+
+cancelDeleteBtn.addEventListener("click", () => {
+  confirmDeleteForm.style.display = "none";
+  deleteAccountBtn.style.display = "inline-block";
+  deleteConfirmInput.value = "";
+  deleteAccountError.textContent = "";
+});
+
+confirmDeleteForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  deleteAccountError.textContent = "";
+
+  if (deleteConfirmInput.value !== "DELETE") {
+    deleteAccountError.textContent = 'Type "DELETE" exactly to confirm.';
+    return;
+  }
+
+  confirmDeleteBtn.disabled = true;
+  confirmDeleteBtn.textContent = "Deleting…";
+
+  const { error } = await supabase.functions.invoke("delete-account");
+
+  if (error) {
+    deleteAccountError.textContent = `Couldn't delete account: ${error.message}`;
+    confirmDeleteBtn.disabled = false;
+    confirmDeleteBtn.textContent = "Permanently delete my account";
+    return;
+  }
+
+  await supabase.auth.signOut();
+  window.location.href = "login.html";
+});
+
 const session = await requireSession();
 if (session) {
   document.getElementById("logout-btn").addEventListener("click", signOut);
+  accountEmailInput.value = session.user.email;
   loadProfile(session.user.id);
   loadSavedListings();
 }

@@ -5,7 +5,8 @@
   --bg: #fafafa;
   --accent: #1a1a1a;
   --danger: #b3261e;
-  --radius: 6px;
+  --radius: 8px;
+  --focus-ring: 0 0 0 3px rgba(26, 26, 26, 0.1);
 }
 
 * {
@@ -75,24 +76,42 @@ input[type="email"],
 input[type="password"],
 input[type="search"] {
   width: 100%;
-  padding: 10px 12px;
+  height: 42px;
+  padding: 0 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 14px;
+  font-family: inherit;
+  color: var(--ink);
+  background: #fff;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: var(--focus-ring);
 }
 
 button {
-  padding: 10px 16px;
+  height: 42px;
+  padding: 0 16px;
   border: none;
   border-radius: var(--radius);
   background: var(--accent);
   color: #fff;
   font-size: 14px;
+  font-family: inherit;
   cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.05s ease;
 }
 
 button:hover {
   opacity: 0.85;
+}
+
+button:active {
+  transform: scale(0.98);
 }
 
 button.secondary {
@@ -118,44 +137,84 @@ button.danger {
 
 .filter-bar {
   display: flex;
-  gap: 12px;
-  margin-bottom: 24px;
+  gap: 10px;
+  margin-bottom: 28px;
   flex-wrap: wrap;
 }
 
 .filter-bar input[type="search"] {
-  flex: 1;
-  min-width: 200px;
+  flex: 1 1 240px;
 }
 
 .filter-bar select {
-  padding: 10px 12px;
+  height: 42px;
+  flex: 0 0 auto;
+  min-width: 130px;
+  padding: 0 32px 0 14px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: 14px;
-  background: #fff;
+  font-family: inherit;
+  color: var(--ink);
+  background: #fff
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%236b6b6b' stroke-width='1.5'%3E%3Cpath d='M4 6l4 4 4-4'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+  background-size: 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.filter-bar select:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: var(--focus-ring);
+}
+
+.card-image-wrap {
+  position: relative;
 }
 
 .save-btn {
-  margin-top: 8px;
-  background: #fff;
-  color: var(--ink);
-  border: 1px solid var(--border);
-  font-size: 13px;
-  padding: 6px 12px;
-  align-self: flex-start;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  transition: transform 0.15s ease;
 }
 
-.save-btn.saved {
-  background: var(--ink);
-  color: #fff;
-  border-color: var(--ink);
+.save-btn:hover {
+  opacity: 1;
+  transform: scale(1.08);
+}
+
+.save-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.8;
+}
+
+.save-btn.saved svg {
+  fill: var(--ink);
 }
 
 .listing-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
+  gap: 24px;
 }
 
 .listing-card {
@@ -165,6 +224,12 @@ button.danger {
   background: #fff;
   display: flex;
   flex-direction: column;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.listing-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
 }
 
 .listing-card img {

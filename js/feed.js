@@ -1,5 +1,5 @@
-import { supabase, requireSession } from "./supabase-client.js";
-import { signOut } from "./auth.js";
+import { supabase, requireSession } from "./supabase-client.js?v=3";
+import { signOut } from "./auth.js?v=3";
 
 const grid = document.getElementById("listing-grid");
 const emptyState = document.getElementById("empty-state");
@@ -43,8 +43,8 @@ async function toggleSave(listingId, btn) {
     }
     savedListingIds.delete(listingId);
     savedRowIdByListingId.delete(listingId);
-    btn.textContent = "Save";
     btn.classList.remove("saved");
+    btn.setAttribute("aria-label", "Save");
   } else {
     const { data, error } = await supabase
       .from("saved_listings")
@@ -57,19 +57,36 @@ async function toggleSave(listingId, btn) {
     }
     savedListingIds.add(listingId);
     savedRowIdByListingId.set(listingId, data.id);
-    btn.textContent = "Saved";
     btn.classList.add("saved");
+    btn.setAttribute("aria-label", "Unsave");
   }
 }
+
+const BOOKMARK_ICON =
+  '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg"><path d="M3 2h10v12l-5-3.5L3 14V2z"/></svg>';
 
 function renderListing(listing) {
   const card = document.createElement("div");
   card.className = "listing-card";
 
+  const imageWrap = document.createElement("div");
+  imageWrap.className = "card-image-wrap";
+
   const img = document.createElement("img");
   img.src = listing.image_url;
   img.alt = listing.item_name;
-  card.appendChild(img);
+  imageWrap.appendChild(img);
+
+  const saveBtn = document.createElement("button");
+  saveBtn.className = "save-btn";
+  saveBtn.innerHTML = BOOKMARK_ICON;
+  const isSaved = savedListingIds.has(listing.id);
+  saveBtn.setAttribute("aria-label", isSaved ? "Unsave" : "Save");
+  if (isSaved) saveBtn.classList.add("saved");
+  saveBtn.addEventListener("click", () => toggleSave(listing.id, saveBtn));
+  imageWrap.appendChild(saveBtn);
+
+  card.appendChild(imageWrap);
 
   const body = document.createElement("div");
   body.className = "listing-body";
@@ -97,14 +114,6 @@ function renderListing(listing) {
   const handle = listing.profiles?.instagram_handle;
   seller.textContent = handle ? `${sellerName} · @${handle}` : sellerName;
   body.appendChild(seller);
-
-  const saveBtn = document.createElement("button");
-  saveBtn.className = "save-btn";
-  const isSaved = savedListingIds.has(listing.id);
-  saveBtn.textContent = isSaved ? "Saved" : "Save";
-  if (isSaved) saveBtn.classList.add("saved");
-  saveBtn.addEventListener("click", () => toggleSave(listing.id, saveBtn));
-  body.appendChild(saveBtn);
 
   card.appendChild(body);
   return card;

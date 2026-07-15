@@ -36,6 +36,10 @@ and edge function below — keep them in sync if you change one.
 11. Users can view and edit their own account details (display name, Instagram handle) from a
     profile page.
 12. Users can save/unsave any listing; saved listings show up on their profile page.
+13. Users can update their own login email and/or password from the profile page.
+14. Users can permanently delete their own account (profile, all listings, all saved listings)
+    from the profile page. This is a real hard delete — distinct from the listing-level soft
+    delete in requirement #8, which still applies to listings and never changes.
 
 ## Non-goals (v1 — do not build these unless asked)
 
@@ -50,13 +54,19 @@ and edge function below — keep them in sync if you change one.
 Canonical file: `supabase/schema.sql`. Three tables:
 
 - `profiles` — one row per user, extends `auth.users`. Fields: `name`, `instagram_handle`.
-- `listings` — one row per resale item. Fields: `seller_id` (→ profiles), `shopify_product_id`,
-  `item_name`, `image_url`, `item_type`, `size`, `status` (enum: `active`, `sold`, `archived`,
-  `deleted`), timestamps.
-- `saved_listings` — join table for bookmarking. Fields: `user_id` (→ profiles), `listing_id`
-  (→ listings), unique on `(user_id, listing_id)`. Private to the user who saved it.
+- `listings` — one row per resale item. Fields: `seller_id` (→ profiles, `on delete cascade`),
+  `shopify_product_id`, `item_name`, `image_url`, `item_type`, `size`, `status` (enum: `active`,
+  `sold`, `archived`, `deleted`), timestamps.
+- `saved_listings` — join table for bookmarking. Fields: `user_id` (→ profiles, `on delete
+  cascade`), `listing_id` (→ listings, `on delete cascade`), unique on `(user_id, listing_id)`.
+  Private to the user who saved it.
 
-`status = 'deleted'` **is** the soft delete. There is no hard-delete path anywhere in the app.
+`status = 'deleted'` **is** the soft delete for listings — a lister marking their own item
+deleted is always an UPDATE, never a real DELETE. This is unrelated to account deletion: the
+foreign keys above cascade specifically so that a user closing their *own account* (see "Account
+deletion" below) results in a genuine hard delete of everything tied to them. Don't read the two
+as contradictory — one is "how a listing's lifecycle works," the other is "what happens when a
+person leaves the platform entirely."
 
 ## Row Level Security (the actual security boundary)
 
@@ -97,6 +107,26 @@ and returns normalized JSON to the frontend.
 Be a reasonable citizen of the storefront's server: debounce the search-as-you-type input
 (~300ms) so you aren't firing a request per keystroke.
 
+## Account deletion
+
+A user closing their own account needs a real hard delete of `auth.users`, which only the
+Supabase Admin API can do (`auth.admin.deleteUser`) — that requires the service role key, which
+must never reach the frontend. So this is a Supabase Edge Function
+(`supabase/functions/delete-account/index.ts`), deployed **with** JWT verification (the default —
+no `--no-verify-jwt`, unlike `search-products`):
+
+1. The function reads the caller's own JWT from the `Authorization` header and resolves it to a
+   user via an anon-scoped client — it never trusts a user id passed in the request body.
+2. It then uses a service-role client to call `auth.admin.deleteUser(user.id)`. The service role
+   key doesn't need to be configured — Supabase auto-injects `SUPABASE_SERVICE_ROLE_KEY` into
+   every Edge Function's environment.
+3. Deleting the `auth.users` row cascades through `profiles` → `listings` → `saved_listings` via
+   the `on delete cascade` foreign keys above — one call removes everything.
+
+Frontend calls it with `supabase.functions.invoke('delete-account')`; the user's session token is
+attached automatically. `profile.html` requires typing "DELETE" into a confirmation field before
+this fires, since it's irreversible.
+
 ## Pages / routes
 
 Plain multi-page static site (no client-side router needed):
@@ -113,7 +143,9 @@ Plain multi-page static site (no client-side router needed):
 - `my-listings.html` — protected. Shows the current user's own listings (all statuses except
   `deleted`) with buttons to flip status to sold/archived/deleted.
 - `profile.html` — protected. View/edit the current user's `profiles` row (name, Instagram
-  handle), plus a "Saved listings" section listing everything in `saved_listings` for this user.
+  handle); update login email/password via `supabase.auth.updateUser`; a "Saved listings"
+  section listing everything in `saved_listings` for this user; a "Danger zone" that calls the
+  `delete-account` edge function after a typed "DELETE" confirmation.
 
 Every protected page should check for a Supabase session on load and redirect to `login.html`
 if there isn't one. Remember: this check is a UX courtesy, not the security — RLS is.
@@ -130,7 +162,18 @@ export const SUPABASE_PUBLISHABLE_KEY = "YOUR-PUBLISHABLE-KEY";
 This file is safe to commit. The publishable key (Supabase's newer name for the anon key) is
 meant to be public in every Supabase client app — RLS is what enforces access, not secrecy of
 this key. Do not try to hide it in an env var that a static site can't read at runtime anyway.
-Never commit a Supabase *service role* key anywhere — this project doesn't need one.
+Never commit a Supabase *service role* key anywhere in the frontend — the `delete-account`
+function is the one place that needs it, and it gets it from the auto-injected
+`SUPABASE_SERVICE_ROLE_KEY` env var, not from this file.
+
+### Cache-busting
+
+Every `<script src="js/...">`/`<link href="css/style.css">` and every inter-module `import
+... from "./file.js"` carries a shared `?v=N` query suffix. There's no build step to hash
+filenames, so without this, GitHub Pages' `cache-control: max-age=600` plus normal browser
+caching means users can silently keep running old JS/CSS after a deploy. **Bump `v` on every
+file that changes** (a simple project-wide find/replace) whenever you edit anything under `js/`
+or `css/`.
 
 ## Repo layout to produce
 
@@ -153,7 +196,9 @@ Never commit a Supabase *service role* key anywhere — this project doesn't nee
 │   └── profile.js
 ├── supabase/
 │   ├── schema.sql
-│   └── functions/search-products/index.ts
+│   └── functions/
+│       ├── search-products/index.ts
+│       └── delete-account/index.ts
 ├── CLAUDE.md
 ├── SETUP.md
 └── README.md
@@ -171,3 +216,6 @@ Never commit a Supabase *service role* key anywhere — this project doesn't nee
 - [ ] Users can view/edit their name + Instagram handle from `profile.html`
 - [ ] Feed supports search-by-name and filter-by-type/size
 - [ ] Saved listings persist per-user and are private to that user (RLS-enforced)
+- [ ] Users can update their login email/password from `profile.html`
+- [ ] Deleting an account removes the auth user, profile, listings, and saved listings — a real
+      hard delete, confirmed via cascading foreign keys, distinct from listing soft-delete

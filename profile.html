@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>My profile — Resale App</title>
-  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/style.css?v=3" />
 </head>
 <body>
   <header class="site-header">
@@ -34,11 +34,57 @@
       <button type="submit">Save changes</button>
     </form>
 
+    <h1>Login details</h1>
+
+    <form id="login-details-form" class="auth-form" style="margin: 0 0 40px">
+      <label for="account-email">Email</label>
+      <input type="email" id="account-email" required autocomplete="email" />
+
+      <label for="new-password">New password</label>
+      <input
+        type="password"
+        id="new-password"
+        autocomplete="new-password"
+        minlength="6"
+        placeholder="Leave blank to keep your current password"
+      />
+
+      <label for="confirm-password">Confirm new password</label>
+      <input type="password" id="confirm-password" autocomplete="new-password" minlength="6" />
+
+      <div class="error" id="login-details-error"></div>
+      <div class="hint" id="login-details-saved"></div>
+
+      <button type="submit">Update login details</button>
+    </form>
+
     <h1>Saved listings</h1>
     <div class="empty-state" id="saved-empty" style="display: none"></div>
-    <div id="saved-grid"></div>
+    <div id="saved-grid" style="margin-bottom: 40px"></div>
+
+    <h1>Danger zone</h1>
+    <p class="hint">
+      Deleting your account permanently removes your profile, all your listings, and your
+      saved listings. This cannot be undone.
+    </p>
+
+    <button type="button" class="danger" id="delete-account-btn">Delete my account</button>
+
+    <form id="confirm-delete-form" class="auth-form" style="display: none; margin: 16px 0 0">
+      <label for="delete-confirm-input">Type DELETE to confirm</label>
+      <input type="text" id="delete-confirm-input" autocomplete="off" />
+
+      <div class="error" id="delete-account-error"></div>
+
+      <div style="display: flex; gap: 8px">
+        <button type="submit" class="danger" id="confirm-delete-btn">
+          Permanently delete my account
+        </button>
+        <button type="button" class="secondary" id="cancel-delete-btn">Cancel</button>
+      </div>
+    </form>
   </main>
 
-  <script type="module" src="js/profile.js"></script>
+  <script type="module" src="js/profile.js?v=3"></script>
 </body>
 </html>
