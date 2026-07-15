@@ -1,10 +1,11 @@
-// supabase/functions/search-tibi/index.ts
+// supabase/functions/search-products/index.ts
 //
-// Proxies Tibi's public Shopify search endpoint so the static frontend can query it without
-// hitting CORS restrictions. No API key needed — Tibi's search/suggest.json endpoint is public.
+// Proxies a Shopify storefront's public search endpoint so the static frontend can query it
+// without hitting CORS restrictions. No API key needed — the search/suggest.json endpoint is
+// public.
 //
-// Deploy with: supabase functions deploy search-tibi --no-verify-jwt
-// Call from the frontend with: supabase.functions.invoke('search-tibi', { body: { q: 'blazer' } })
+// Deploy with: supabase functions deploy search-products --no-verify-jwt
+// Call from the frontend with: supabase.functions.invoke('search-products', { body: { q: 'blazer' } })
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -35,7 +36,7 @@ Deno.serve(async (req) => {
 
     if (!res.ok) {
       return new Response(
-        JSON.stringify({ error: `Tibi search failed with status ${res.status}` }),
+        JSON.stringify({ error: `Product search failed with status ${res.status}` }),
         { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }

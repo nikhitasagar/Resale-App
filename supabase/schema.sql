@@ -1,4 +1,4 @@
--- Tibi Resale Marketplace — schema + Row Level Security
+-- Resale App — schema + Row Level Security
 -- Run this in the Supabase SQL editor (or `supabase db push`) once, on a fresh project.
 
 -- Extends Supabase's built-in auth.users with the profile fields this app needs.
@@ -14,9 +14,9 @@ create type listing_status as enum ('active', 'sold', 'archived', 'deleted');
 create table listings (
   id uuid default gen_random_uuid() primary key,
   seller_id uuid references profiles(id) not null,
-  shopify_product_id text not null,   -- Tibi's product handle, kept for reference/linking back
+  shopify_product_id text not null,   -- the storefront's product handle, kept for reference/linking back
   item_name text not null,
-  image_url text not null,            -- Tibi's own CDN url — never uploaded/stored by us
+  image_url text not null,            -- the storefront's own CDN url — never uploaded/stored by us
   item_type text,                     -- Shopify's product_type, e.g. "Dress", "Blazer"
   size text not null,                 -- the one field the lister actually types
   status listing_status not null default 'active',

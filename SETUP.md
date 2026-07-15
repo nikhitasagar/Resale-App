@@ -27,7 +27,7 @@ Claude Code can run `supabase db push` for you.)
 ## 4. Create the GitHub repo
 ```
 gh auth login          # one-time, opens a browser
-gh repo create tibi-resale --public --source=. --push
+gh repo create resale-app --public --source=. --push
 ```
 If you don't have the `gh` CLI, just create a public repo on github.com and push manually —
 Pages requires the repo to be public on a free personal GitHub account.
@@ -46,7 +46,7 @@ After Claude Code scaffolds the project, put your real Supabase URL and anon key
 
 ```
 Read CLAUDE.md in this repo and follow it exactly — it's the full project spec.
-supabase/schema.sql and supabase/functions/search-tibi/index.ts already contain the canonical
+supabase/schema.sql and supabase/functions/search-products/index.ts already contain the canonical
 SQL and edge function code; use them as-is unless something needs fixing.
 
 Please:
@@ -57,14 +57,14 @@ Please:
 3. Build index.html as the protected feed: query listings (status active/sold) joined with
    profiles, show image, item name, size, type, and the lister's name + @handle. Redirect to
    login.html if there's no active session.
-4. Build new-listing.html: a debounced search box that calls the search-tibi edge function,
+4. Build new-listing.html: a debounced search box that calls the search-products edge function,
    lets the user pick a result, then collects the size, then inserts a row into listings.
 5. Build my-listings.html: show the current user's own listings with buttons to set status to
    sold / archived / deleted (all just UPDATE statements — never a real delete).
 6. Add config.js at the repo root with placeholder SUPABASE_URL / SUPABASE_ANON_KEY values and
    a comment explaining it's safe to commit.
 7. Once the schema is live in my Supabase project, deploy the edge function with
-   `supabase functions deploy search-tibi --no-verify-jwt`.
+   `supabase functions deploy search-products --no-verify-jwt`.
 
 Ask me for anything you're missing (like whether the schema has been run yet) rather than
 guessing.

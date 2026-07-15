@@ -67,7 +67,7 @@ function selectProduct(product) {
 }
 
 async function runSearch(query) {
-  const { data, error } = await supabase.functions.invoke("search-tibi", {
+  const { data, error } = await supabase.functions.invoke("search-products", {
     body: { q: query },
   });
 

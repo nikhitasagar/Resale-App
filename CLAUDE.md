@@ -1,11 +1,11 @@
-# Tibi Resale Marketplace — Project Brief
+# Resale App — Project Brief
 
-A small web app where people list Tibi clothing items for resale. Product info (name, image,
-type) is pulled live from Tibi's real Shopify storefront; the lister only adds a size. Listings
+A small web app where people list clothing items for resale. Product info (name, image, type)
+is pulled live from a real Shopify storefront via search; the lister only adds a size. Listings
 are only visible to logged-in users.
 
 Read this whole file before writing any code. `supabase/schema.sql` and
-`supabase/functions/search-tibi/index.ts` in this repo are the canonical versions of the SQL
+`supabase/functions/search-products/index.ts` in this repo are the canonical versions of the SQL
 and edge function below — keep them in sync if you change one.
 
 ## Tech stack (do not deviate without asking)
@@ -14,16 +14,16 @@ and edge function below — keep them in sync if you change one.
   client via ESM CDN import (`https://esm.sh/@supabase/supabase-js@2`). This keeps the site a
   pure static bundle that deploys to GitHub Pages with zero tooling.
 - **Backend:** Supabase (Postgres + Auth + Edge Functions), free tier.
-- **No file uploads, no image storage.** Images are Tibi's own CDN URLs, stored as plain text
-  in the database.
+- **No file uploads, no image storage.** Images are the storefront's own CDN URLs, stored as
+  plain text in the database.
 
 ## Functional requirements
 
-1. Users create Tibi resale listings.
+1. Users create resale listings.
 2. A listing has: item name, image, size, item type.
-3. Item name, image, and item type are **pulled from Tibi's live Shopify storefront** via search
-   (see "Tibi product search" below) — never typed in or uploaded by the lister.
-4. The lister manually enters the size (this is the one field Tibi's API can't give us).
+3. Item name, image, and item type are **pulled from a live Shopify storefront** via search
+   (see "Product search" below) — never typed in or uploaded by the lister.
+4. The lister manually enters the size (this is the one field the storefront's API can't give us).
 5. Every user has an account. Logged-in users can browse listings and post their own.
 6. An account stores: display name, Instagram handle (their contact method).
 7. Every listing shows the lister's name and @handle so viewers know how to contact them.
@@ -42,7 +42,7 @@ and edge function below — keep them in sync if you change one.
 - Payments or checkout of any kind
 - In-app messaging (contact happens on Instagram, outside the app)
 - Admin/moderation dashboard
-- Multi-brand support (Tibi only, for now)
+- Multi-brand support (a single brand's catalog only, for now)
 - Any image upload/storage pipeline
 
 ## Data model
@@ -82,23 +82,20 @@ RLS:
 Do not weaken these policies for convenience during development — build the login flow first so
 you're always testing against a real authenticated session.
 
-## Tibi product search
+## Product search
 
-Tibi runs on Shopify. Its public, no-auth-required search endpoint:
-
-```
-https://www.tibi.com/search/suggest.json?q={query}&resources[type]=product&resources[limit]=10
-```
+The catalog comes from a single brand's Shopify storefront, via its public, no-auth-required
+`/search/suggest.json` endpoint — see `supabase/functions/search-products/index.ts` for the
+exact URL. No API key or secret is needed; the endpoint is public.
 
 This can't be called directly from the frontend — Shopify doesn't send permissive CORS headers
 on this endpoint, so browser `fetch()` calls from a github.io origin will be blocked. That's
-why there's a Supabase Edge Function (`supabase/functions/search-tibi/index.ts`) acting as a
-thin proxy: it calls Tibi's endpoint server-side (no CORS issue server-to-server) and returns
-normalized JSON to the frontend. No API key or secret is needed for this — the endpoint is
-public.
+why there's a Supabase Edge Function (`supabase/functions/search-products/index.ts`) acting as
+a thin proxy: it calls the storefront's endpoint server-side (no CORS issue server-to-server)
+and returns normalized JSON to the frontend.
 
-Be a reasonable citizen of Tibi's server: debounce the search-as-you-type input (~300ms) so you
-aren't firing a request per keystroke.
+Be a reasonable citizen of the storefront's server: debounce the search-as-you-type input
+(~300ms) so you aren't firing a request per keystroke.
 
 ## Pages / routes
 
@@ -111,8 +108,8 @@ Plain multi-page static site (no client-side router needed):
   where `status in ('active','sold')`, joined with `profiles` for name + @handle. Client-side
   search by item name plus filters (by item type, by size) over the fetched set. Each card has
   a Save/Unsave toggle. Redirect to `login.html` if there's no session.
-- `new-listing.html` — protected. Search box wired to the `search-tibi` edge function → pick a
-  result → enter size → insert into `listings`.
+- `new-listing.html` — protected. Search box wired to the `search-products` edge function → pick
+  a result → enter size → insert into `listings`.
 - `my-listings.html` — protected. Shows the current user's own listings (all statuses except
   `deleted`) with buttons to flip status to sold/archived/deleted.
 - `profile.html` — protected. View/edit the current user's `profiles` row (name, Instagram
@@ -156,7 +153,7 @@ Never commit a Supabase *service role* key anywhere — this project doesn't nee
 │   └── profile.js
 ├── supabase/
 │   ├── schema.sql
-│   └── functions/search-tibi/index.ts
+│   └── functions/search-products/index.ts
 ├── CLAUDE.md
 ├── SETUP.md
 └── README.md
@@ -166,7 +163,7 @@ Never commit a Supabase *service role* key anywhere — this project doesn't nee
 
 - [ ] Logged-out visitor hitting `index.html` (or the API directly) gets no listing data
 - [ ] Signup collects name + Instagram handle before letting someone post
-- [ ] New-listing search hits Tibi's real catalog through the edge function, no manual entry of
+- [ ] New-listing search hits the real catalog through the edge function, no manual entry of
       name/image/type
 - [ ] Every listing card shows the lister's name + @handle
 - [ ] Sold/Archived/Deleted are all just status updates — no hard deletes anywhere
