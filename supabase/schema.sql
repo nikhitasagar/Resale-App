@@ -21,6 +21,8 @@ create table listings (
   item_name text not null,
   image_url text not null,            -- the storefront's own CDN url — never uploaded/stored by us
   item_type text,                     -- Shopify's product_type, e.g. "Dress", "Blazer"
+  style_number text,                  -- e.g. "T000TW8013", parsed from the product description
+  material text,                      -- e.g. "53% Polyester, 43% Wool, 4% Elastane", parsed too
   size text not null,                 -- the one field the lister actually types
   status listing_status not null default 'active',
   created_at timestamptz default now(),

@@ -12,6 +12,39 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// The storefront's search results don't have dedicated fields for style number or material —
+// both are embedded as <li> bullet points inside the HTML `body` description, e.g.:
+//   <ul><li>53% Polyester, 43% Wool, 4% Elastane</li><li>Style Number: T000TW8013</li></ul>
+function stripTags(html: string): string {
+  return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+}
+
+function extractListItems(bodyHtml: string): string[] {
+  const items: string[] = [];
+  const liRegex = /<li>([\s\S]*?)<\/li>/gi;
+  let match;
+  while ((match = liRegex.exec(bodyHtml)) !== null) {
+    items.push(stripTags(match[1]));
+  }
+  return items;
+}
+
+function extractStyleNumber(items: string[]): string | null {
+  for (const item of items) {
+    const m = item.match(/Style Number:\s*(\S+)/i);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function extractMaterial(items: string[]): string | null {
+  for (const item of items) {
+    if (/style number/i.test(item)) continue;
+    if (/\d{1,3}%/.test(item)) return item;
+  }
+  return null;
+}
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -44,12 +77,17 @@ Deno.serve(async (req) => {
     const data = await res.json();
     const products = data?.resources?.results?.products ?? [];
 
-    const results = products.map((p: any) => ({
-      shopify_product_id: p.handle,
-      item_name: p.title,
-      image_url: p.image ?? null,
-      item_type: p.type ?? null,
-    }));
+    const results = products.map((p: any) => {
+      const items = extractListItems(p.body ?? "");
+      return {
+        shopify_product_id: p.handle,
+        item_name: p.title,
+        image_url: p.image ?? null,
+        item_type: p.type ?? null,
+        style_number: extractStyleNumber(items),
+        material: extractMaterial(items),
+      };
+    });
 
     return new Response(JSON.stringify(results), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

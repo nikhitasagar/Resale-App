@@ -1,5 +1,5 @@
-import { supabase, requireSession } from "./supabase-client.js?v=3";
-import { signOut } from "./auth.js?v=3";
+import { supabase, requireSession } from "./supabase-client.js?v=4";
+import { signOut } from "./auth.js?v=4";
 
 const grid = document.getElementById("listing-grid");
 const emptyState = document.getElementById("empty-state");
@@ -103,10 +103,21 @@ function renderListing(listing) {
 
   const meta = document.createElement("div");
   meta.className = "meta";
-  meta.textContent = [listing.item_type, listing.size ? `Size ${listing.size}` : null]
+  meta.textContent = [
+    listing.item_type,
+    listing.size ? `Size ${listing.size}` : null,
+    listing.style_number,
+  ]
     .filter(Boolean)
     .join(" · ");
   body.appendChild(meta);
+
+  if (listing.material) {
+    const material = document.createElement("div");
+    material.className = "material";
+    material.textContent = listing.material;
+    body.appendChild(material);
+  }
 
   const seller = document.createElement("div");
   seller.className = "seller";
@@ -125,7 +136,13 @@ function applyFilters() {
   const size = sizeFilter.value;
 
   const filtered = allListings.filter((listing) => {
-    if (query && !listing.item_name.toLowerCase().includes(query)) return false;
+    if (query) {
+      const haystack = [listing.item_name, listing.style_number, listing.material]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      if (!haystack.includes(query)) return false;
+    }
     if (type && listing.item_type !== type) return false;
     if (size && listing.size !== size) return false;
     return true;

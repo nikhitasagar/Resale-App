@@ -1,5 +1,5 @@
-import { supabase, requireSession } from "./supabase-client.js?v=3";
-import { signOut } from "./auth.js?v=3";
+import { supabase, requireSession } from "./supabase-client.js?v=4";
+import { signOut } from "./auth.js?v=4";
 
 const searchInput = document.getElementById("search-input");
 const resultsEl = document.getElementById("search-results");
@@ -59,8 +59,16 @@ function selectProduct(product) {
   info.appendChild(name);
   const type = document.createElement("div");
   type.className = "meta";
-  type.textContent = product.item_type ?? "";
+  type.textContent = [product.item_type, product.style_number].filter(Boolean).join(" · ");
   info.appendChild(type);
+
+  if (product.material) {
+    const material = document.createElement("div");
+    material.className = "material";
+    material.textContent = product.material;
+    info.appendChild(material);
+  }
+
   selectedEl.appendChild(info);
 
   sizeForm.style.display = "flex";
@@ -104,6 +112,8 @@ sizeForm.addEventListener("submit", async (e) => {
     item_name: selectedProduct.item_name,
     image_url: selectedProduct.image_url,
     item_type: selectedProduct.item_type,
+    style_number: selectedProduct.style_number,
+    material: selectedProduct.material,
     size: sizeInput.value,
   });
 

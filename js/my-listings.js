@@ -1,5 +1,5 @@
-import { supabase, requireSession } from "./supabase-client.js?v=3";
-import { signOut } from "./auth.js?v=3";
+import { supabase, requireSession } from "./supabase-client.js?v=4";
+import { signOut } from "./auth.js?v=4";
 
 const listEl = document.getElementById("my-listings");
 const emptyState = document.getElementById("empty-state");
@@ -37,10 +37,21 @@ function renderRow(listing) {
 
   const meta = document.createElement("div");
   meta.className = "meta";
-  meta.textContent = [listing.item_type, listing.size ? `Size ${listing.size}` : null]
+  meta.textContent = [
+    listing.item_type,
+    listing.size ? `Size ${listing.size}` : null,
+    listing.style_number,
+  ]
     .filter(Boolean)
     .join(" · ");
   info.appendChild(meta);
+
+  if (listing.material) {
+    const material = document.createElement("div");
+    material.className = "material";
+    material.textContent = listing.material;
+    info.appendChild(material);
+  }
 
   row.appendChild(info);
 

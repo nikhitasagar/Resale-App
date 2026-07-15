@@ -20,17 +20,18 @@ and edge function below — keep them in sync if you change one.
 ## Functional requirements
 
 1. Users create resale listings.
-2. A listing has: item name, image, size, item type.
-3. Item name, image, and item type are **pulled from a live Shopify storefront** via search
-   (see "Product search" below) — never typed in or uploaded by the lister.
+2. A listing has: item name, image, size, item type, style number, material.
+3. Item name, image, item type, style number, and material are **pulled from a live Shopify
+   storefront** via search (see "Product search" below) — never typed in or uploaded by the
+   lister.
 4. The lister manually enters the size (this is the one field the storefront's API can't give us).
 5. Every user has an account. Logged-in users can browse listings and post their own.
 6. An account stores: display name, Instagram handle (their contact method).
 7. Every listing shows the lister's name and @handle so viewers know how to contact them.
 8. Lister actions on their own listings: add, mark sold, mark archived, mark deleted (soft
    delete only — never a hard DB delete).
-9. Logged-in users can view all active/sold listings, and can search by item name and filter
-   by item type and size.
+9. Logged-in users can view all active/sold listings, and can search by item name, style
+   number, or material, plus filter by item type and size.
 10. Logged-out users cannot view any listing data — enforced at the database level (Row Level
     Security), not just hidden in the UI. This is a hard requirement, not a nice-to-have.
 11. Users can view and edit their own account details (display name, Instagram handle) from a
@@ -55,8 +56,8 @@ Canonical file: `supabase/schema.sql`. Three tables:
 
 - `profiles` — one row per user, extends `auth.users`. Fields: `name`, `instagram_handle`.
 - `listings` — one row per resale item. Fields: `seller_id` (→ profiles, `on delete cascade`),
-  `shopify_product_id`, `item_name`, `image_url`, `item_type`, `size`, `status` (enum: `active`,
-  `sold`, `archived`, `deleted`), timestamps.
+  `shopify_product_id`, `item_name`, `image_url`, `item_type`, `style_number`, `material`, `size`,
+  `status` (enum: `active`, `sold`, `archived`, `deleted`), timestamps.
 - `saved_listings` — join table for bookmarking. Fields: `user_id` (→ profiles, `on delete
   cascade`), `listing_id` (→ listings, `on delete cascade`), unique on `(user_id, listing_id)`.
   Private to the user who saved it.
@@ -104,6 +105,14 @@ why there's a Supabase Edge Function (`supabase/functions/search-products/index.
 a thin proxy: it calls the storefront's endpoint server-side (no CORS issue server-to-server)
 and returns normalized JSON to the frontend.
 
+`style_number` and `material` aren't dedicated fields in the search response — both are
+embedded as `<li>` bullets inside the HTML `body` description, e.g. `<li>53% Polyester, 43%
+Wool, 4% Elastane</li><li>Style Number: T000TW8013</li>`. The edge function strips tags off each
+`<li>`, then: the style number is whichever item matches `Style Number:\s*(\S+)`; the material
+is the first item (excluding that one) containing a `\d{1,3}%` pattern, which also correctly
+picks up variants like `Upper: 100% Cotton Fabric, 100% Suede Leather`. Either can come back
+`null` if a product's description doesn't follow this structure — both are nullable columns.
+
 Be a reasonable citizen of the storefront's server: debounce the search-as-you-type input
 (~300ms) so you aren't firing a request per keystroke.
 
@@ -136,8 +145,9 @@ Plain multi-page static site (no client-side router needed):
   to `profiles`)
 - `index.html` — the feed, and the app's homepage once logged in. Protected. Query `listings`
   where `status in ('active','sold')`, joined with `profiles` for name + @handle. Client-side
-  search by item name plus filters (by item type, by size) over the fetched set. Each card has
-  a Save/Unsave toggle. Redirect to `login.html` if there's no session.
+  search across item name, style number, and material, plus filters (by item type, by size)
+  over the fetched set. Each card shows style number/material and has a Save/Unsave toggle.
+  Redirect to `login.html` if there's no session.
 - `new-listing.html` — protected. Search box wired to the `search-products` edge function → pick
   a result → enter size → insert into `listings`.
 - `my-listings.html` — protected. Shows the current user's own listings (all statuses except
@@ -219,3 +229,4 @@ or `css/`.
 - [ ] Users can update their login email/password from `profile.html`
 - [ ] Deleting an account removes the auth user, profile, listings, and saved listings — a real
       hard delete, confirmed via cascading foreign keys, distinct from listing soft-delete
+- [ ] Style number and material are pulled from the storefront and searchable in the feed
