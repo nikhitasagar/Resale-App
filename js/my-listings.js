@@ -1,5 +1,5 @@
-import { supabase, requireSession } from "./supabase-client.js?v=4";
-import { signOut } from "./auth.js?v=4";
+import { supabase, requireSession } from "./supabase-client.js?v=5";
+import { signOut } from "./auth.js?v=5";
 
 const listEl = document.getElementById("my-listings");
 const emptyState = document.getElementById("empty-state");

@@ -176,6 +176,17 @@ Never commit a Supabase *service role* key anywhere in the frontend — the `del
 function is the one place that needs it, and it gets it from the auto-injected
 `SUPABASE_SERVICE_ROLE_KEY` env var, not from this file.
 
+### Auth email redirect URLs
+
+Magic-link and signup-confirmation emails redirect wherever `emailRedirectTo` says
+(`js/auth.js` sets it to the calling page's own URL, so it adapts to local dev vs. the deployed
+origin automatically). But Supabase Auth only honors an `emailRedirectTo` that matches an entry
+in the project's **Authentication → URL Configuration → Redirect URLs** allow-list — anything
+else silently falls back to the dashboard's default **Site URL** (which is `http://localhost:3000`
+on a fresh project). If magic-link/confirmation emails land on a dead `localhost` URL, this
+allow-list is almost certainly the reason — add the deployed site (e.g.
+`https://YOUR-USERNAME.github.io/YOUR-REPO/**`) there, and set Site URL to match.
+
 ### Cache-busting
 
 Every `<script src="js/...">`/`<link href="css/style.css">` and every inter-module `import
