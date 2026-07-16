@@ -1,12 +1,23 @@
-import { supabase, requireSession } from "./supabase-client.js?v=7";
-import { signOut } from "./auth.js?v=7";
+import { supabase, requireSession } from "./supabase-client.js?v=8";
+import { signOut } from "./auth.js?v=8";
+import { CURRENCIES } from "./format.js?v=8";
 
 const searchInput = document.getElementById("search-input");
 const resultsEl = document.getElementById("search-results");
 const selectedEl = document.getElementById("selected-product");
 const sizeForm = document.getElementById("size-form");
 const sizeInput = document.getElementById("size-input");
+const priceInput = document.getElementById("price-input");
+const currencySelect = document.getElementById("currency-select");
+const shippingIncludedInput = document.getElementById("shipping-included-input");
 const errorEl = document.getElementById("error");
+
+CURRENCIES.forEach((code) => {
+  const opt = document.createElement("option");
+  opt.value = code;
+  opt.textContent = code;
+  currencySelect.appendChild(opt);
+});
 
 let selectedProduct = null;
 let debounceTimer = null;
@@ -115,6 +126,9 @@ sizeForm.addEventListener("submit", async (e) => {
     style_number: selectedProduct.style_number,
     material: selectedProduct.material,
     size: sizeInput.value,
+    price: parseFloat(priceInput.value),
+    currency: currencySelect.value,
+    shipping_included: shippingIncludedInput.checked,
   });
 
   if (error) {

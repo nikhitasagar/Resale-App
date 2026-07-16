@@ -1,5 +1,6 @@
-import { supabase, requireSession } from "./supabase-client.js?v=7";
-import { signOut } from "./auth.js?v=7";
+import { supabase, requireSession } from "./supabase-client.js?v=8";
+import { signOut } from "./auth.js?v=8";
+import { formatPrice } from "./format.js?v=8";
 
 const grid = document.getElementById("listing-grid");
 const emptyState = document.getElementById("empty-state");
@@ -100,6 +101,18 @@ function renderListing(listing) {
   name.className = "item-name";
   name.textContent = listing.item_name;
   body.appendChild(name);
+
+  const formattedPrice = formatPrice(listing.price, listing.currency);
+  if (formattedPrice) {
+    const price = document.createElement("div");
+    price.className = "price";
+    price.textContent = formattedPrice + " ";
+    const shipping = document.createElement("span");
+    shipping.className = "shipping";
+    shipping.textContent = listing.shipping_included ? "· Shipping included" : "· + shipping";
+    price.appendChild(shipping);
+    body.appendChild(price);
+  }
 
   const meta = document.createElement("div");
   meta.className = "meta";

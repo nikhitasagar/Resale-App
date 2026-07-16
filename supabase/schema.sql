@@ -24,6 +24,10 @@ create table listings (
   style_number text,                  -- e.g. "T000TW8013", parsed from the product description
   material text,                      -- e.g. "53% Polyester, 43% Wool, 4% Elastane", parsed too
   size text not null,                 -- the one field the lister actually types
+  price numeric(10, 2),                -- the lister's asking price; nullable only so existing
+                                       -- rows survive this migration — new listings require it
+  currency text not null default 'USD',
+  shipping_included boolean not null default false,
   status listing_status not null default 'active',
   created_at timestamptz default now(),
   updated_at timestamptz default now()

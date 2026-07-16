@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>New listing — Resale App</title>
-  <link rel="stylesheet" href="css/style.css?v=7" />
+  <link rel="stylesheet" href="css/style.css?v=8" />
 </head>
 <body>
   <header class="site-header">
@@ -29,12 +29,24 @@
     <form id="size-form" class="auth-form" style="display: none; margin-top: 16px">
       <label for="size-input">Size</label>
       <input type="text" id="size-input" required placeholder="e.g. 4, M, 27" />
+
+      <label for="price-input">Price</label>
+      <div class="price-row">
+        <select id="currency-select"></select>
+        <input type="number" id="price-input" required min="0" step="0.01" placeholder="0.00" />
+      </div>
+
+      <label class="checkbox-label">
+        <input type="checkbox" id="shipping-included-input" />
+        Shipping included
+      </label>
+
       <button type="submit">Post listing</button>
     </form>
 
     <div class="error" id="error"></div>
   </main>
 
-  <script type="module" src="js/new-listing.js?v=7"></script>
+  <script type="module" src="js/new-listing.js?v=8"></script>
 </body>
 </html>

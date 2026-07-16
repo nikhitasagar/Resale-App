@@ -20,11 +20,14 @@ and edge function below — keep them in sync if you change one.
 ## Functional requirements
 
 1. Users create resale listings.
-2. A listing has: item name, image, size, item type, style number, material.
+2. A listing has: item name, image, size, item type, style number, material, price + currency,
+   and whether shipping is included.
 3. Item name, image, item type, style number, and material are **pulled from a live Shopify
    storefront** via search (see "Product search" below) — never typed in or uploaded by the
    lister.
-4. The lister manually enters the size (this is the one field the storefront's API can't give us).
+4. The lister manually enters the size, price, currency, and shipping-included flag (the fields
+   the storefront's API can't give us — the resale price is the lister's own decision, not the
+   storefront's retail price).
 5. Every user has an account. Logged-in users can browse listings and post their own.
 6. An account stores: display name, Instagram handle (their contact method).
 7. Every listing shows the lister's name and @handle so viewers know how to contact them.
@@ -57,7 +60,10 @@ Canonical file: `supabase/schema.sql`. Three tables:
 - `profiles` — one row per user, extends `auth.users`. Fields: `name`, `instagram_handle`.
 - `listings` — one row per resale item. Fields: `seller_id` (→ profiles, `on delete cascade`),
   `shopify_product_id`, `item_name`, `image_url`, `item_type`, `style_number`, `material`, `size`,
-  `status` (enum: `active`, `sold`, `archived`, `deleted`), timestamps.
+  `price` (numeric, nullable only so pre-existing rows survive the migration — the frontend
+  form requires it for new listings), `currency` (default `'USD'`), `shipping_included`
+  (boolean, default `false`), `status` (enum: `active`, `sold`, `archived`, `deleted`),
+  timestamps.
 - `saved_listings` — join table for bookmarking. Fields: `user_id` (→ profiles, `on delete
   cascade`), `listing_id` (→ listings, `on delete cascade`), unique on `(user_id, listing_id)`.
   Private to the user who saved it.
@@ -151,10 +157,12 @@ Plain multi-page static site (no client-side router needed):
 - `index.html` — the feed, and the app's homepage once logged in. Protected. Query `listings`
   where `status in ('active','sold')`, joined with `profiles` for name + @handle. Client-side
   search across item name, style number, and material, plus filters (by item type, by size)
-  over the fetched set. Each card shows style number/material and has a Save/Unsave toggle.
+  over the fetched set. Each card shows a formatted price + shipping status
+  (`js/format.js`'s `formatPrice`), style number/material, and has a Save/Unsave toggle.
   Redirect to `login.html` if there's no session.
 - `new-listing.html` — protected. Search box wired to the `search-products` edge function → pick
-  a result → enter size → insert into `listings`.
+  a result → enter size, price, currency (`js/format.js` lists the supported codes: USD, CAD,
+  GBP, EUR, AUD), and whether shipping is included → insert into `listings`.
 - `my-listings.html` — protected. Shows the current user's own listings (all statuses except
   `deleted`) with buttons to flip status to sold/archived/deleted.
 - `profile.html` — protected. View/edit the current user's `profiles` row (name, Instagram
@@ -234,6 +242,7 @@ or `css/`.
 ├── js/
 │   ├── supabase-client.js
 │   ├── auth.js
+│   ├── format.js
 │   ├── feed.js
 │   ├── new-listing.js
 │   ├── my-listings.js
@@ -264,3 +273,5 @@ or `css/`.
 - [ ] Deleting an account removes the auth user, profile, listings, and saved listings — a real
       hard delete, confirmed via cascading foreign keys, distinct from listing soft-delete
 - [ ] Style number and material are pulled from the storefront and searchable in the feed
+- [ ] Every new listing requires a price + currency and a shipping-included flag, shown
+      prominently on every listing card/row
