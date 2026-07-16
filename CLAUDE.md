@@ -140,13 +140,14 @@ this fires, since it's irreversible.
 
 Plain multi-page static site (no client-side router needed):
 
-- `login.html` — email/password or magic link sign-in, plus "Forgot password?" (calls
-  `supabase.auth.resetPasswordForEmail`). A password-recovery link also establishes a session,
-  so this page listens for the `PASSWORD_RECOVERY` auth event (and checks the URL hash for
-  `type=recovery` before the initial session check) to show a "set new password" form instead
-  of silently redirecting into the app.
-- `signup.html` — create account, then immediately prompt for name + Instagram handle (writes
-  to `profiles`)
+- `login.html` — email/password, magic link, or "Continue with Google" sign-in, plus "Forgot
+  password?" (calls `supabase.auth.resetPasswordForEmail`). A password-recovery link also
+  establishes a session, so this page listens for the `PASSWORD_RECOVERY` auth event (and checks
+  the URL hash for `type=recovery` before the initial session check) to show a "set new
+  password" form instead of silently redirecting into the app.
+- `signup.html` — create account (email/password or "Continue with Google"), then immediately
+  prompt for name + Instagram handle (writes to `profiles`). A Google name, if available, is
+  pre-filled.
 - `index.html` — the feed, and the app's homepage once logged in. Protected. Query `listings`
   where `status in ('active','sold')`, joined with `profiles` for name + @handle. Client-side
   search across item name, style number, and material, plus filters (by item type, by size)
@@ -190,6 +191,24 @@ else silently falls back to the dashboard's default **Site URL** (which is `http
 on a fresh project). If magic-link/confirmation emails land on a dead `localhost` URL, this
 allow-list is almost certainly the reason — add the deployed site (e.g.
 `https://YOUR-USERNAME.github.io/YOUR-REPO/**`) there, and set Site URL to match.
+
+### Google OAuth sign-in
+
+`signInWithGoogle()` in `js/auth.js` wraps `supabase.auth.signInWithOAuth({ provider: 'google' })`
+with `redirectTo` set to the calling page's own URL (same pattern as the email redirects above —
+still needs to be in the Redirect URLs allow-list). It's wired into both `login.html` and
+`signup.html`; either works for both new and returning users because the existing
+session-then-profile-check logic on both pages already handles it — a Google sign-in just
+means the "no profile yet" branch fires for first-timers, sending them to fill in name +
+Instagram handle (with name pre-filled from their Google account if available), same as any
+other new signup.
+
+Setup lives entirely outside this repo (a Google Cloud OAuth client + a toggle in Supabase's
+dashboard) — nothing to keep in sync here beyond this button. One thing worth knowing if this
+app has enough users: while the Google OAuth consent screen is in "Testing" status, Google caps
+it at 100 allow-listed test users; past that, it needs to be published to "Production," which
+may show a "Google hasn't verified this app" warning until Google reviews it. Neither is a
+security concern — both are Google's own gating, unrelated to anything in this codebase.
 
 ### Cache-busting
 

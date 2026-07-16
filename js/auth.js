@@ -1,4 +1,4 @@
-import { supabase } from "./supabase-client.js?v=6";
+import { supabase } from "./supabase-client.js?v=7";
 
 // Redirect targets must also be added to the Supabase project's Auth > URL Configuration >
 // Redirect URLs allow-list, or Supabase silently falls back to the dashboard's default Site
@@ -17,6 +17,16 @@ export async function signInWithMagicLink(email) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: { emailRedirectTo: currentPageUrl() },
+  });
+  return { error };
+}
+
+// Navigates the browser away to Google immediately — the returned error only fires for
+// something wrong before that redirect (e.g. the provider isn't enabled yet).
+export async function signInWithGoogle() {
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: currentPageUrl() },
   });
   return { error };
 }

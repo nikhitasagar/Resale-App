@@ -61,6 +61,23 @@ main {
   gap: 12px;
 }
 
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+  margin: 4px 0;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 h1 {
   font-size: 22px;
   margin-bottom: 24px;

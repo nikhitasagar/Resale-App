@@ -1,5 +1,5 @@
-import { supabase, requireSession } from "./supabase-client.js?v=6";
-import { signOut } from "./auth.js?v=6";
+import { supabase, requireSession } from "./supabase-client.js?v=7";
+import { signOut } from "./auth.js?v=7";
 
 const profileForm = document.getElementById("profile-form");
 const nameInput = document.getElementById("name");

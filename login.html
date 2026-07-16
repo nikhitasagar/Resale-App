@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Log in — Resale App</title>
-  <link rel="stylesheet" href="css/style.css?v=6" />
+  <link rel="stylesheet" href="css/style.css?v=7" />
 </head>
 <body>
   <header class="site-header">
@@ -14,6 +14,10 @@
   <main>
     <form id="login-form" class="auth-form">
       <h1>Log in</h1>
+
+      <button type="button" class="secondary" id="google-btn">Continue with Google</button>
+
+      <div class="divider">or</div>
 
       <label for="email">Email</label>
       <input type="email" id="email" required autocomplete="email" />
@@ -55,13 +59,14 @@
   </main>
 
   <script type="module">
-    import { supabase } from "./js/supabase-client.js?v=6";
+    import { supabase } from "./js/supabase-client.js?v=7";
     import {
       signInWithPassword,
       signInWithMagicLink,
+      signInWithGoogle,
       requestPasswordReset,
       createProfile,
-    } from "./js/auth.js?v=6";
+    } from "./js/auth.js?v=7";
 
     // If this user signed up but email confirmation delayed profile creation, finish it now
     // using the fields signup.html stashed locally. Otherwise send anyone without a profile
@@ -135,6 +140,15 @@
     const errorEl = document.getElementById("error");
     const magicLinkBtn = document.getElementById("magic-link-btn");
     const forgotPasswordBtn = document.getElementById("forgot-password-btn");
+    const googleBtn = document.getElementById("google-btn");
+
+    googleBtn.addEventListener("click", async () => {
+      errorEl.textContent = "";
+      const { error } = await signInWithGoogle();
+      if (error) {
+        errorEl.textContent = error.message;
+      }
+    });
 
     loginForm.addEventListener("submit", async (e) => {
       e.preventDefault();

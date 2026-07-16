@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Sign up — Resale App</title>
-  <link rel="stylesheet" href="css/style.css?v=6" />
+  <link rel="stylesheet" href="css/style.css?v=7" />
 </head>
 <body>
   <header class="site-header">
@@ -14,6 +14,10 @@
   <main>
     <form id="account-form" class="auth-form">
       <h1>Create your account</h1>
+
+      <button type="button" class="secondary" id="google-btn">Continue with Google</button>
+
+      <div class="divider">or</div>
 
       <label for="email">Email</label>
       <input type="email" id="email" required autocomplete="email" />
@@ -52,19 +56,22 @@
   </main>
 
   <script type="module">
-    import { supabase } from "./js/supabase-client.js?v=6";
-    import { signUp, createProfile } from "./js/auth.js?v=6";
+    import { supabase } from "./js/supabase-client.js?v=7";
+    import { signUp, signInWithGoogle, createProfile } from "./js/auth.js?v=7";
 
     const accountForm = document.getElementById("account-form");
     const profileForm = document.getElementById("profile-form");
     const confirmNotice = document.getElementById("confirm-email-notice");
     const accountError = document.getElementById("account-error");
     const profileError = document.getElementById("profile-error");
+    const googleBtn = document.getElementById("google-btn");
+    const nameInput = document.getElementById("name");
 
     let pendingUserId = null;
 
-    // If the user already has a session (e.g. they confirmed their email and logged in
-    // separately) but no profile row yet, skip straight to the name/handle step.
+    // If the user already has a session (e.g. they signed in with Google, or confirmed their
+    // email and logged in separately) but no profile row yet, skip straight to the name/handle
+    // step — pre-filling the name Google already gave us, if any.
     const { data: { session: existingSession } } = await supabase.auth.getSession();
     if (existingSession) {
       const { data: existingProfile } = await supabase
@@ -78,8 +85,19 @@
       } else {
         accountForm.style.display = "none";
         profileForm.style.display = "flex";
+        const googleName = existingSession.user.user_metadata?.full_name
+          ?? existingSession.user.user_metadata?.name;
+        if (googleName) nameInput.value = googleName;
       }
     }
+
+    googleBtn.addEventListener("click", async () => {
+      accountError.textContent = "";
+      const { error } = await signInWithGoogle();
+      if (error) {
+        accountError.textContent = error.message;
+      }
+    });
 
     accountForm.addEventListener("submit", async (e) => {
       e.preventDefault();
