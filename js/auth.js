@@ -1,4 +1,4 @@
-import { supabase } from "./supabase-client.js?v=8";
+import { supabase } from "./supabase-client.js?v=9";
 
 // Redirect targets must also be added to the Supabase project's Auth > URL Configuration >
 // Redirect URLs allow-list, or Supabase silently falls back to the dashboard's default Site

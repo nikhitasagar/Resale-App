@@ -1,6 +1,6 @@
-import { supabase, requireSession } from "./supabase-client.js?v=8";
-import { signOut } from "./auth.js?v=8";
-import { CURRENCIES } from "./format.js?v=8";
+import { supabase, requireSession } from "./supabase-client.js?v=9";
+import { signOut } from "./auth.js?v=9";
+import { CURRENCIES } from "./format.js?v=9";
 
 const searchInput = document.getElementById("search-input");
 const resultsEl = document.getElementById("search-results");

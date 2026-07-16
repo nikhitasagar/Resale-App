@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Log in — Resale App</title>
-  <link rel="stylesheet" href="css/style.css?v=8" />
+  <link rel="stylesheet" href="css/style.css?v=9" />
 </head>
 <body>
   <header class="site-header">
@@ -59,14 +59,14 @@
   </main>
 
   <script type="module">
-    import { supabase } from "./js/supabase-client.js?v=8";
+    import { supabase } from "./js/supabase-client.js?v=9";
     import {
       signInWithPassword,
       signInWithMagicLink,
       signInWithGoogle,
       requestPasswordReset,
       createProfile,
-    } from "./js/auth.js?v=8";
+    } from "./js/auth.js?v=9";
 
     // If this user signed up but email confirmation delayed profile creation, finish it now
     // using the fields signup.html stashed locally. Otherwise send anyone without a profile
