@@ -1,4 +1,4 @@
-import { supabase } from "./supabase-client.js?v=5";
+import { supabase } from "./supabase-client.js?v=6";
 
 // Redirect targets must also be added to the Supabase project's Auth > URL Configuration >
 // Redirect URLs allow-list, or Supabase silently falls back to the dashboard's default Site
@@ -17,6 +17,13 @@ export async function signInWithMagicLink(email) {
   const { error } = await supabase.auth.signInWithOtp({
     email,
     options: { emailRedirectTo: currentPageUrl() },
+  });
+  return { error };
+}
+
+export async function requestPasswordReset(email) {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: currentPageUrl(),
   });
   return { error };
 }

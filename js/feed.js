@@ -1,5 +1,5 @@
-import { supabase, requireSession } from "./supabase-client.js?v=5";
-import { signOut } from "./auth.js?v=5";
+import { supabase, requireSession } from "./supabase-client.js?v=6";
+import { signOut } from "./auth.js?v=6";
 
 const grid = document.getElementById("listing-grid");
 const emptyState = document.getElementById("empty-state");

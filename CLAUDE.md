@@ -140,7 +140,11 @@ this fires, since it's irreversible.
 
 Plain multi-page static site (no client-side router needed):
 
-- `login.html` — email/password or magic link sign-in
+- `login.html` — email/password or magic link sign-in, plus "Forgot password?" (calls
+  `supabase.auth.resetPasswordForEmail`). A password-recovery link also establishes a session,
+  so this page listens for the `PASSWORD_RECOVERY` auth event (and checks the URL hash for
+  `type=recovery` before the initial session check) to show a "set new password" form instead
+  of silently redirecting into the app.
 - `signup.html` — create account, then immediately prompt for name + Instagram handle (writes
   to `profiles`)
 - `index.html` — the feed, and the app's homepage once logged in. Protected. Query `listings`

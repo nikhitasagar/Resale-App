@@ -1,5 +1,5 @@
-import { supabase, requireSession } from "./supabase-client.js?v=5";
-import { signOut } from "./auth.js?v=5";
+import { supabase, requireSession } from "./supabase-client.js?v=6";
+import { signOut } from "./auth.js?v=6";
 
 const searchInput = document.getElementById("search-input");
 const resultsEl = document.getElementById("search-results");
